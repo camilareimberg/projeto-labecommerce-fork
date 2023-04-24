@@ -37,8 +37,10 @@ app.get("/ping", async (req: Request, res: Response) => {
 //Feedback APIs e Express - 14.03 ex. 2 - get all users - método get - rota users e repsosta é o array de usuários
 app.get('/users', async (req: Request, res: Response)=> {
  try {
-    const result = await db.raw(`SELECT * FROM users`);
+    // const result = await db.raw(`SELECT * FROM users`);
+    const result = await db.select("*").from("users");
     res.status(200).send(result);
+
  }  
  catch(error: any) {
     console.log(error) 
@@ -49,7 +51,8 @@ app.get('/users', async (req: Request, res: Response)=> {
 //Feedback APIs e Express - 14.03 ex. 2 - get all products - método get - rota products e repsosta é o array de produtos
 app.get('/products', async (req: Request, res: Response)=> {
     try {
-        const result = await db.raw(`SELECT * FROM products`);
+        const result= await db.select("*").from("products")
+        // const result = await db.raw(`SELECT * FROM products`);
         res.status(200).send(result);
     }  
     catch(error: any) {
@@ -61,7 +64,8 @@ app.get('/products', async (req: Request, res: Response)=> {
    //get all purchases
 app.get('/purchases', async (req: Request, res: Response)=> {
     try {
-        const result = await db.raw(`SELECT * FROM purchases`);
+        const result = await db.select("*").from("purchases");
+        // const result = await db.raw(`SELECT * FROM purchases`);
         res.status(200).send(result);
     }
     catch(error: any) {
@@ -286,6 +290,73 @@ app.get('/users/:id/purchases', async (req: Request, res: Response)=> {
     }
 })
 
+
+//Aprofundamento Knex - Get  Purchases by id
+app.get('/purchases/:id', async (req: Request, res: Response) => {
+try {
+    const idPurchases = req.params.id as string;
+    const [filterPurchases] = await db
+    .select("*")
+    .from("purchases")
+    .where({ id: idPurchases });
+
+    if (!filterPurchases) {
+        res.status(404);
+        throw new Error("Id não encontrado, tente novamente!");
+      }
+      const purchaseUsers = await db("purchases")
+      .select(
+        "purchases.id AS idCompra",
+        "purchases.total_price AS valorTotalDaCompra",
+        "purchases.paid AS Pagamento",
+        "purchases.created_at AS criadoEm",
+        "users.id AS idComprador",
+        "users.email AS emailComprador",
+        "users.name AS nomeComprador"
+      )
+      .innerJoin("users", "purchases.buyer_id", "=", "users.id")
+      .where({ "purchases.id": idPurchases });
+
+
+      const productByPurchases = await db("purchases_products")
+      .select(
+        "products.id  AS idProduto",
+        "products.name AS nomeProduto",
+        "products.price AS preçoProduto",
+        "products.category ",
+        "products.image_url ",
+        "purchases_products.quantity"
+      )
+      .innerJoin(
+        "products",
+        "purchases_products.product_id",
+        "=",
+        "products.id"
+      )
+      .where({ "purchases_products.purchase_id": idPurchases });
+
+      const result = {
+        ...purchaseUsers[0],
+        paid: purchaseUsers[0].paid === 0 ? false : true,
+        productList: productByPurchases,
+      };
+
+      res.status(200).send(result);
+
+}
+catch (err) {
+    console.log(err);
+    if (res.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (err instanceof Error) {
+        res.send(err.message);
+      } else {
+        res.send("Error inesperado");
+      }
+    }
+})
 
 //Aprofundamento Express - 16.03 ex. 02 Delete User by id
 app.delete('/users/:id', (req: Request, res: Response)=> {
