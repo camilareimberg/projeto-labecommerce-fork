@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    //determina como padrão, qual é a versao do js que será utilizada e quais são as bibliotecas compativeis
+    "module": "CommonJS",
+    "sourceMap": true,
+    //serve para mapear no cód em qual arquivo está o erro
+    "outDir": "./build",
+    //determina qual pasta os arquivos transpilados e que serão lidos pelo navegador
+    "removeComments": true,
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "rootDir": "./src",
+    "esModuleInterop": true,
+    // "strict": true
+
+    //seleciona qual a pasta/diretório raiz que deveremos buscar os dados para transpilação
+  }
+}
